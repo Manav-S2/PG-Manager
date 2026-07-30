@@ -1,0 +1,202 @@
+import React, { useState } from 'react';
+import {
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  Pressable,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { Feather, Ionicons } from '@expo/vector-icons';
+
+type IconName = keyof typeof Ionicons.glyphMap;
+
+const SIDEBAR_MENU = [
+  {
+    header: "OWNER'S VIEW",
+    items: [
+      { id: 'owner-listing', label: 'Listings', icon: 'home' as IconName },
+      { id: 'owner-overview', label: 'Overview', icon: 'grid' as IconName },
+      { id: 'owner-rent', label: 'Rent', icon: 'card' as IconName },
+      { id: 'owner-team', label: 'Team & Access', icon: 'people' as IconName },
+      { id: 'owner-communication', label: 'Communication', icon: 'chatbubbles' as IconName, badge: 6 },
+    ],
+  },
+  {
+    header: "MANAGER'S VIEW",
+    items: [
+      { id: 'manager-complaints', label: 'Complaints', icon: 'flag' as IconName },
+      { id: 'manager-rooms', label: 'Rooms', icon: 'bed' as IconName },
+      { id: 'manager-rent', label: 'Rent', icon: 'card' as IconName },
+      { id: 'manager-residents', label: 'Residents', icon: 'people' as IconName },
+      { id: 'manager-staff', label: 'Staff & Mess', icon: 'briefcase' as IconName },
+      { id: 'manager-enquiries', label: 'Enquiries', icon: 'mail' as IconName },
+    ],
+  },
+];
+
+function Navbar() {
+  return (
+    <View style={styles.header}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={styles.logoText}>AVRO</Text>
+        <View style={styles.logoAccent} />
+        <View style={styles.subtitleWrapper}>
+          <View style={styles.subtitleDivider} />
+          <Text style={styles.subtitleText}>Host Control</Text>
+        </View>
+      </View>
+      
+      <View style={styles.headerRight}>
+        <TouchableOpacity style={styles.hostBtn}>
+           <Text style={styles.hostBtnText}>Host Controls</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconBtn}>
+          <Feather name="user" size={18} color="#222" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconBtn}>
+          <Feather name="menu" size={18} color="#222" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+function SidebarItem({ label, icon, badge, isActive, onPress }: any) {
+  return (
+    <Pressable onPress={onPress} style={[styles.sidebarItem, isActive && styles.sidebarItemActive]}>
+      <Ionicons name={icon} size={18} color={isActive ? "#1A1A1A" : "#6E6E73"} />
+      <Text style={[styles.sidebarItemText, isActive && styles.sidebarItemTextActive]}>{label}</Text>
+      {!!badge && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{badge}</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+export default function HostControlPage() {
+  const { width } = useWindowDimensions();
+  const isWide = width >= 900;
+  const [activeItem, setActiveItem] = useState('owner-listing');
+
+  const allItems = SIDEBAR_MENU.flatMap(g => g.items);
+  const activeTitle = allItems.find(i => i.id === activeItem)?.label || 'Host Control';
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" />
+      <Navbar />
+      
+      <View style={styles.container}>
+        {isWide && (
+          <View style={styles.sidebar}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sidebarContent}>
+               <View style={styles.propertySelector}>
+                  <Text style={styles.propertySelectorTitle}>Sai Residency</Text>
+                  <Text style={styles.propertySelectorMeta}>Kamla Nagar · Delhi</Text>
+               </View>
+
+              {SIDEBAR_MENU.map(section => (
+                <View key={section.header} style={styles.sidebarSection}>
+                  <Text style={styles.sectionHeader}>{section.header}</Text>
+                  {section.items.map(item => (
+                    <SidebarItem 
+                      key={item.id} 
+                      {...item} 
+                      isActive={activeItem === item.id} 
+                      onPress={() => setActiveItem(item.id)} 
+                    />
+                  ))}
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        <View style={styles.contentArea}>
+          {/* Section just below navbar */}
+          <View style={styles.pageHeader}>
+            <View>
+              <Text style={styles.pageTitle}>{activeTitle}</Text>
+            </View>
+            <View style={styles.pageHeaderRight}>
+              <View style={styles.liveDate}>
+                <View style={styles.liveDot} />
+                <Text style={styles.liveDateText}>Live · Jul 2026</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Empty Content Area */}
+          <ScrollView contentContainerStyle={styles.pageScroll}>
+            {/* The rest of the content has been removed as requested. */}
+          </ScrollView>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: '#F9F9F9' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EAEAEA',
+    zIndex: 100,
+  },
+  logoText: { fontSize: 24, fontWeight: '700', color: '#111', letterSpacing: 2 },
+  logoAccent: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#FF6B00', marginLeft: 2, marginTop: 10 },
+  subtitleWrapper: { flexDirection: 'row', alignItems: 'center', marginLeft: 12 },
+  subtitleDivider: { width: 1.5, height: 20, backgroundColor: '#D2D2D7', marginRight: 12, borderRadius: 1 },
+  subtitleText: { color: '#6E6E73', fontWeight: '500', fontSize: 18 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  hostBtn: { marginRight: 16 },
+  hostBtnText: { fontSize: 14, fontWeight: '500', color: '#111' },
+  iconBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center' },
+  
+  container: { flex: 1, flexDirection: 'row' },
+  sidebar: { width: 280, backgroundColor: '#FFFFFF', borderRightWidth: 1, borderRightColor: '#EAEAEA' },
+  sidebarContent: { padding: 24, paddingBottom: 40 },
+  propertySelector: { padding: 16, backgroundColor: '#F7F7F7', borderRadius: 12, marginBottom: 24 },
+  propertySelectorTitle: { fontSize: 16, fontWeight: '600', color: '#111' },
+  propertySelectorMeta: { fontSize: 13, color: '#6E6E73', marginTop: 4 },
+  
+  sidebarSection: { marginBottom: 24 },
+  sectionHeader: { fontSize: 12, fontWeight: '700', color: '#8E8E93', letterSpacing: 1, marginBottom: 12, marginLeft: 12 },
+  sidebarItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8, marginBottom: 2 },
+  sidebarItemActive: { backgroundColor: '#F0F0F0' },
+  sidebarItemText: { flex: 1, fontSize: 14, fontWeight: '500', color: '#6E6E73', marginLeft: 12 },
+  sidebarItemTextActive: { color: '#1A1A1A' },
+  badge: { backgroundColor: '#E0E0E0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12 },
+  badgeText: { fontSize: 11, fontWeight: '600', color: '#444' },
+
+  contentArea: { flex: 1, backgroundColor: '#F9F9F9' },
+  pageHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 32, 
+    paddingVertical: 24,
+    backgroundColor: '#F9F9F9',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EAEAEA'
+  },
+  pageTitle: { fontSize: 28, fontWeight: '600', color: '#111' },
+  pageHeaderRight: { flexDirection: 'row', alignItems: 'center' },
+  liveDate: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8F5E9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4CAF50', marginRight: 6 },
+  liveDateText: { fontSize: 13, fontWeight: '500', color: '#2E7D32' },
+  
+  pageScroll: { padding: 32 },
+});
