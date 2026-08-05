@@ -16,13 +16,13 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Line, Polyline, Path, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
 import { SharedNavbar } from '../components/SharedNavbar';
 import { AuthModal } from '../components/AuthModal';
 import { INTER, ORANGE } from '../constants';
 import { UserSession } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 type OwnerPage = 'owner-listing' | 'owner-overview' | 'owner-rent' | 'owner-team' | 'owner-communication';
@@ -125,10 +125,10 @@ const formatCurrency = (value: number) => `₹${new Intl.NumberFormat('en-IN').f
 const compactCurrency = (value: number) => `₹${(value / 100000).toFixed(value >= 1000000 ? 1 : 2).replace(/\.0$/, '')}L`;
 
 export function HostControlScreen({ onNavigateHome, onNavigateHost, onNavigateProfile }: { onNavigateHome: () => void; onNavigateHost?: () => void; onNavigateProfile?: () => void }) {
+  const { session } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [authVisible, setAuthVisible] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [session, setSession] = useState<UserSession | null>(null);
   const [activeItem, setActiveItem] = useState<OwnerPage | string>('owner-listing');
   const [selectedProperty, setSelectedProperty] = useState(PROPERTIES[0]);
   const [toast, setToast] = useState<string | null>(null);
@@ -136,19 +136,6 @@ export function HostControlScreen({ onNavigateHome, onNavigateHost, onNavigatePr
   const isWide = width >= 900;
   const isDesktop = width >= 1180;
   const fade = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    AsyncStorage.getItem('mock_session').then(storedSession => {
-      if (storedSession) {
-        const parsed = JSON.parse(storedSession);
-        if (parsed.user?.user_metadata?.full_name === 'Host') {
-          parsed.user.user_metadata.full_name = 'Rakesh Mehta';
-          AsyncStorage.setItem('mock_session', JSON.stringify(parsed));
-        }
-        setSession(parsed);
-      }
-    });
-  }, []);
 
   useEffect(() => {
     fade.setValue(0.94);
@@ -190,7 +177,7 @@ export function HostControlScreen({ onNavigateHome, onNavigateHost, onNavigatePr
       <StatusBar barStyle="dark-content" />
       <SharedNavbar
         session={session}
-        setSession={setSession}
+        setSession={() => {}}
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         openAuth={openAuth}
@@ -295,7 +282,7 @@ export function HostControlScreen({ onNavigateHome, onNavigateHost, onNavigatePr
       )}
 
       {toast && <View style={styles.toast}><Ionicons name="checkmark-circle" size={17} color="#8DAF7F" /><Text style={styles.toastText}>{toast}</Text></View>}
-      <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} initialMode={authMode} setSession={setSession} />
+      <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} initialMode={authMode} setSession={() => {}} />
     </SafeAreaView>
   );
 }

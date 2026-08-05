@@ -8,9 +8,9 @@ import {
   Pressable,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ORANGE, SPACE_GROTESK, INTER } from '../constants';
 import { UserSession } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 export function AvroLogoComponent({ size = 30 }: { size?: number }) {
   return (
@@ -114,6 +114,7 @@ export function SharedNavbar({
   onProfilePress,
   onHostControlsPress,
 }: SharedNavbarProps) {
+  const { signOut } = useAuth();
   const [hoveredProfile, setHoveredProfile] = useState(false);
   const [hoveredMenu, setHoveredMenu] = useState(false);
 
@@ -285,10 +286,14 @@ export function SharedNavbar({
                 <HoverMenuItem 
                   iconName="log-out" 
                   label="Log out" 
-                  onPress={() => { 
-                    setMenuOpen(false); 
-                    setSession(null); 
-                    AsyncStorage.removeItem('mock_session'); 
+                  onPress={async () => { 
+                    setMenuOpen(false);
+                    try {
+                      await signOut();
+                      setSession(null);
+                    } catch (e) {
+                      console.warn('[AVRO] Sign-out error', e);
+                    }
                     if (Platform.OS === 'web') {
                       window.location.href = '/';
                     }

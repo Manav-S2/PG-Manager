@@ -4,6 +4,7 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { PropertyScreen } from './src/screens/PropertyScreen';
 import { HostControlScreen } from './src/screens/HostControlScreen';
+import { AuthProvider } from './src/context/AuthContext';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'home' | 'profile' | 'property' | 'host'>('home');
@@ -42,17 +43,20 @@ export default function App() {
     }
   };
 
-  if (currentScreen === 'profile') {
-    return <ProfileScreen onNavigateHome={() => navigate('home')} onNavigateHost={() => navigate('host')} />;
-  }
-  
-  if (currentScreen === 'host') {
-    return <HostControlScreen onNavigateHome={() => navigate('home')} onNavigateHost={() => navigate('host')} onNavigateProfile={() => navigate('profile')} />;
-  }
-  
-  if (currentScreen === 'property') {
-    return <PropertyScreen onNavigateHome={() => navigate('home')} onNavigateProfile={() => navigate('profile')} onNavigateHost={() => navigate('host')} />;
-  }
-
-  return <HomeScreen onNavigateProfile={() => navigate('profile')} onNavigateProperty={() => navigate('property')} onNavigateHost={() => navigate('host')} />;
+  return (
+    <AuthProvider>
+      {currentScreen === 'profile' && (
+        <ProfileScreen onNavigateHome={() => navigate('home')} onNavigateHost={() => navigate('host')} />
+      )}
+      {currentScreen === 'host' && (
+        <HostControlScreen onNavigateHome={() => navigate('home')} onNavigateHost={() => navigate('host')} onNavigateProfile={() => navigate('profile')} />
+      )}
+      {currentScreen === 'property' && (
+        <PropertyScreen onNavigateHome={() => navigate('home')} onNavigateProfile={() => navigate('profile')} onNavigateHost={() => navigate('host')} />
+      )}
+      {currentScreen === 'home' && (
+        <HomeScreen onNavigateProfile={() => navigate('profile')} onNavigateProperty={() => navigate('property')} onNavigateHost={() => navigate('host')} />
+      )}
+    </AuthProvider>
+  );
 }

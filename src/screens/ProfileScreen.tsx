@@ -12,12 +12,11 @@ import {
   View,
   TextInput,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { SharedNavbar } from '../components/SharedNavbar';
 import { AuthModal } from '../components/AuthModal';
 import { ORANGE, INTER } from '../constants';
-import { UserSession } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface MenuItem {
   label: string;
@@ -31,20 +30,14 @@ const SIDEBAR_MENU: { header: string; items: MenuItem[] }[] = [
 ];
 
 export function ProfileScreen({ onNavigateHome, onNavigateHost }: { onNavigateHome: () => void; onNavigateHost?: () => void }) {
+  const { session } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [authVisible, setAuthVisible] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [session, setSession] = useState<UserSession | null>(null);
   const [activeItem, setActiveItem] = useState('Personal');
   const [isEdited, setIsEdited] = useState(false);
   const { width } = useWindowDimensions();
   const isWide = width >= 768;
-
-  useEffect(() => {
-    AsyncStorage.getItem('mock_session').then(storedSession => {
-      if (storedSession) setSession(JSON.parse(storedSession));
-    });
-  }, []);
 
   const openAuth = (mode: 'signin' | 'signup') => {
     setAuthMode(mode);
@@ -59,7 +52,7 @@ export function ProfileScreen({ onNavigateHome, onNavigateHost }: { onNavigateHo
       <StatusBar barStyle="dark-content" />
       <SharedNavbar
         session={session}
-        setSession={setSession}
+        setSession={() => {}}
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         openAuth={openAuth}
@@ -122,7 +115,7 @@ export function ProfileScreen({ onNavigateHome, onNavigateHost }: { onNavigateHo
     </View>
       </View>
 
-      <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} initialMode={authMode} setSession={setSession} />
+      <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} initialMode={authMode} setSession={() => {}} />
     </SafeAreaView>
   );
 }

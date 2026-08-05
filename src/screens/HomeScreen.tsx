@@ -13,14 +13,13 @@ import {
   View,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SharedNavbar } from '../components/SharedNavbar';
 import { StayCard } from '../components/StayCard';
 import { InteractiveSearchBar } from '../components/InteractiveSearchBar';
 import { AuthModal } from '../components/AuthModal';
 import { ORANGE, SPACE_GROTESK, INTER } from '../constants';
 import { CITIES } from '../data/cities';
-import { UserSession } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 const WHITE_BG = '#FFFFFF';
 
@@ -31,11 +30,11 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onNavigateProfile, onNavigateProperty, onNavigateHost }: HomeScreenProps) {
+  const { session, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'stays' | 'community'>('stays');
   const [menuOpen, setMenuOpen] = useState(false);
   const [authVisible, setAuthVisible] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [session, setSession] = useState<UserSession | null>(null);
   const [cardsExpanded, setCardsExpanded] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const fadeIn = useRef(new Animated.Value(0)).current;
@@ -43,17 +42,6 @@ export function HomeScreen({ onNavigateProfile, onNavigateProperty, onNavigateHo
   const { width: screenWidth } = useWindowDimensions();
   const isWide = screenWidth >= 768;
 
-  useEffect(() => {
-    AsyncStorage.getItem('mock_session').then(storedSession => {
-      if (!storedSession) return;
-      const parsed = JSON.parse(storedSession);
-      if (parsed?.user?.email === 'host@email.com' && !parsed?.user?.user_metadata?.is_host) {
-        parsed.user.user_metadata = { ...parsed.user.user_metadata, is_host: true };
-        AsyncStorage.setItem('mock_session', JSON.stringify(parsed));
-      }
-      setSession(parsed);
-    });
-  }, []);
 
   useEffect(() => {
     Animated.parallel([
@@ -73,7 +61,7 @@ export function HomeScreen({ onNavigateProfile, onNavigateProperty, onNavigateHo
       <StatusBar barStyle="dark-content" />
       <SharedNavbar
         session={session}
-        setSession={setSession}
+        setSession={() => {}}
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         openAuth={openAuth}
@@ -186,7 +174,7 @@ export function HomeScreen({ onNavigateProfile, onNavigateProperty, onNavigateHo
         </View>
       </ScrollView>
 
-      <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} initialMode={authMode} setSession={setSession} />
+      <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} initialMode={authMode} setSession={() => {}} />
     </SafeAreaView>
   );
 }

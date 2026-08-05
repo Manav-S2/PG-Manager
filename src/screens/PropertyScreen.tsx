@@ -12,13 +12,12 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { SharedNavbar } from '../components/SharedNavbar';
 import { AuthModal } from '../components/AuthModal';
 import { PROPERTY_IMAGES } from '../data/propertyImages';
 import { ORANGE, SPACE_GROTESK, INTER } from '../constants';
-import { UserSession } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 const AMENITIES = [
   ['bed-outline', 'Bed & mattress'],
@@ -32,25 +31,13 @@ const AMENITIES = [
 const VERIFIED_ESSENTIALS = ['Bed & mattress', 'Wardrobe', 'Study table', 'Study chair', 'Wi-Fi', 'RO water', 'CCTV', 'Fire safety'];
 
 export function PropertyScreen({ onNavigateHome, onNavigateProfile, onNavigateHost }: { onNavigateHome?: () => void; onNavigateProfile?: () => void; onNavigateHost?: () => void }) {
-  const [session, setSession] = useState<UserSession | null>(null);
+  const { session } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [authVisible, setAuthVisible] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [bookingAcknowledged, setBookingAcknowledged] = useState(false);
   const { width } = useWindowDimensions();
   const isWide = width >= 960;
-
-  useEffect(() => {
-    AsyncStorage.getItem('mock_session').then(storedSession => {
-      if (!storedSession) return;
-      const parsed = JSON.parse(storedSession);
-      if (parsed?.user?.email === 'host@email.com' && !parsed?.user?.user_metadata?.is_host) {
-        parsed.user.user_metadata = { ...parsed.user.user_metadata, is_host: true };
-        AsyncStorage.setItem('mock_session', JSON.stringify(parsed));
-      }
-      setSession(parsed);
-    });
-  }, []);
 
   const openAuth = (mode: 'signin' | 'signup') => {
     setAuthMode(mode);
@@ -63,7 +50,7 @@ export function PropertyScreen({ onNavigateHome, onNavigateProfile, onNavigateHo
       <StatusBar barStyle="dark-content" />
       <SharedNavbar
         session={session}
-        setSession={setSession}
+        setSession={() => {}}
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         openAuth={openAuth}
@@ -210,7 +197,7 @@ export function PropertyScreen({ onNavigateHome, onNavigateProfile, onNavigateHo
         </View>
       </ScrollView>
 
-      <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} initialMode={authMode} setSession={setSession} />
+      <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} initialMode={authMode} setSession={() => {}} />
     </SafeAreaView>
   );
 }

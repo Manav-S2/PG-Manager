@@ -9,13 +9,14 @@ import {
   Platform,
   Pressable,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ORANGE, SPACE_GROTESK, INTER } from '../constants';
 import { UserSession } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 function GoogleIcon({ size = 24 }: { size?: number }) {
   return (
@@ -36,6 +37,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ visible, onClose, initialMode, setSession }: AuthModalProps) {
+  const { signIn, signUp, signInWithGoogle } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,6 +45,7 @@ export function AuthModal({ visible, onClose, initialMode, setSession }: AuthMod
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isBtnHovered, setIsBtnHovered] = useState(false);
+  const [loading, setLoading] = useState(false);
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const modalScale = useRef(new Animated.Value(0.95)).current;
   const modalOpacity = useRef(new Animated.Value(0)).current;
@@ -72,39 +75,49 @@ export function AuthModal({ visible, onClose, initialMode, setSession }: AuthMod
       setError('Please fill in all fields.');
       return;
     }
-    setError(null);
-
-    if (mode === 'signin') {
-      const demoUsers: Record<string, { password: string; name: string; is_host?: boolean }> = {
-        'host@email.com': { password: 'host@123', name: 'Rakesh Mehta', is_host: true },
-        'manager@email.com': { password: 'manager@123', name: 'Manager' },
-        'student@email.com': { password: 'student@123', name: 'Student' },
-        'prrnnssh@gmail.com': { password: 'Trump@123', name: 'Purrnanssh' }
-      };
-
-      if (demoUsers[email] && demoUsers[email].password === password) {
-        const mockSession: UserSession = { user: { email, user_metadata: { full_name: demoUsers[email].name, is_host: demoUsers[email].is_host } } };
-        setSession(mockSession);
-        AsyncStorage.setItem('mock_session', JSON.stringify(mockSession));
-      } else {
-        setError('Invalid login credentials');
-        return;
-      }
-    } else {
-      if (!name) {
-        setError('Please enter your full name.');
-        return;
-      }
-      const mockSession: UserSession = { user: { email, user_metadata: { full_name: name } } };
-      setSession(mockSession);
-      AsyncStorage.setItem('mock_session', JSON.stringify(mockSession));
+    if (mode === 'signup' && !name) {
+      setError('Please enter your full name.');
+      return;
     }
-
-    onClose();
+    setError(null);
+    setLoading(true);
+    try {
+      if (mode === 'signin') {
+        await signIn(email, password);
+      } else {
+        await signUp(email, password, name);
+      }
+      // AuthContext updates the global session; propagate to local setSession prop for backward compat
+      // (screens that still accept setSession as a prop will update via useAuth() re-render)
+      onClose();
+    } catch (err: any) {
+      const code: string = err?.code ?? '';
+      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        setError('Invalid email or password.');
+      } else if (code === 'auth/email-already-in-use') {
+        setError('An account with this email already exists.');
+      } else if (code === 'auth/weak-password') {
+        setError('Password must be at least 6 characters.');
+      } else if (code === 'auth/invalid-email') {
+        setError('Please enter a valid email address.');
+      } else {
+        setError(err?.message ?? 'Something went wrong. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleAuth = () => {
-    onClose();
+  const handleGoogleAuth = async () => {
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+      onClose();
+    } catch (err: any) {
+      setError(err?.message ?? 'Google sign-in failed.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!visible) return null;
@@ -198,19 +211,24 @@ export function AuthModal({ visible, onClose, initialMode, setSession }: AuthMod
             </View>
           )}
 
-          <Pressable 
+          <Pressable
             onPress={handleAuth}
+            disabled={loading}
             onHoverIn={() => setIsBtnHovered(true)}
             onHoverOut={() => setIsBtnHovered(false)}
           >
-            <LinearGradient 
+            <LinearGradient
               colors={['#F3550D', '#FF7A30']}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={[styles.primaryBtn, isBtnHovered && { opacity: 0.9 }]}
+              style={[styles.primaryBtn, (isBtnHovered || loading) && { opacity: 0.85 }]}
             >
-              <Text style={styles.primaryBtnText}>
-                {mode === 'signin' ? 'Sign in' : 'Create account'}
-              </Text>
+              {loading ? (
+                <ActivityIndicator color="#FFF" size="small" />
+              ) : (
+                <Text style={styles.primaryBtnText}>
+                  {mode === 'signin' ? 'Sign in' : 'Create account'}
+                </Text>
+              )}
             </LinearGradient>
           </Pressable>
 
