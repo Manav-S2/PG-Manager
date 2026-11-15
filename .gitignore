@@ -40,3 +40,14 @@ example
 # generated native folders
 /ios
 /android
+
+# large non-code binaries
+*.pdf
+*.png
+
+# build output
+__pycache__/
+venv/
+.venv/
+target/
+build/
